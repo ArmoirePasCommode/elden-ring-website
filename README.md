@@ -23,12 +23,39 @@ Ce projet est un site web dédié à l'univers d'Elden Ring, développé avec Re
    npm run dev
    ```
 
+## Backend API (Express + Firestore + Cloud Storage)
+
+- Démarrer le serveur localement (nécessite des identifiants Google ADC):
+
+```bash
+npm run dev:server
+```
+
+- Builder le serveur:
+
+```bash
+npm run build:server
+```
+
+Variables d'environnement:
+
+- `GCS_BUCKET` – nom de votre bucket GCS pour les images
+
+Endpoints API:
+
+- `GET /api/demigods` – lister les demi-dieux
+- `GET /api/demigods/:id` – récupérer un demi-dieu
+- `POST /api/demigods` – créer un demi-dieu `{ name, title?, description?, mainImageUrl? }`
+- `PUT /api/demigods/:id` – modifier un demi-dieu
+- `DELETE /api/demigods/:id` – supprimer un demi-dieu
+- `POST /api/media/main-picture` – téléverser une image base64 `{ base64, filename?, contentType?, demigodId? }`
+
 ## Déploiement
 
-Pour déployer sur Google App Engine :
-1. Construisez le projet :
+Déployer sur Google App Engine :
+1. Construisez le frontend et le serveur :
    ```bash
-   npm run build
+   npm run build && npm run build:server
    ```
 2. Déployez :
    ```bash

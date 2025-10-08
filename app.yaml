@@ -1,11 +1,49 @@
 runtime: nodejs20
+env: standard
+instance_class: F1
+env_variables:
+  NODE_ENV: production
+  GCS_BUCKET: elden-ring-media-eng-blade-474413-p1
 
 handlers:
-  # Serve index.html à la racine
-  - url: /
+  # Root-level JS with correct MIME (safeguard if assets not matched)
+  - url: /(.*\.js)
+    static_files: dist/\1
+    upload: dist/.*\.js
+    mime_type: application/javascript
+
+  # Root-level CSS with correct MIME (safeguard)
+  - url: /(.*\.css)
+    static_files: dist/\1
+    upload: dist/.*\.css
+    mime_type: text/css
+
+  # Serve JS files with correct MIME
+  - url: /assets/(.*\.js)
+    static_files: dist/assets/\1
+    upload: dist/assets/.*\.js
+    mime_type: application/javascript
+
+  # Serve CSS files with correct MIME
+  - url: /assets/(.*\.css)
+    static_files: dist/assets/\1
+    upload: dist/assets/.*\.css
+    mime_type: text/css
+
+  # Serve all other static files (images/fonts, etc.)
+  - url: /assets/(.*)
+    static_files: dist/assets/\1
+    upload: dist/assets/.*
+
+  # API handled by Express
+  - url: /api
+    script: auto
+  - url: /api/.*
+    script: auto
+
+  # SPA Fallback: redirect all non-static URLs to index.html
+  - url: /.*
     static_files: dist/index.html
     upload: dist/index.html
+    secure: always
 
-  # Serve tous les fichiers du dossier dist/assets
-  - url: /assets
-    static_dir: dist/assets
