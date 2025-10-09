@@ -8,6 +8,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import demigodRouter from './routes/demigods.js';
 import mediaRouter from './routes/media.js';
+import authRouter from './routes/auth.js';
 // Initialize Firebase Admin (App Engine default service account or env var JSON)
 initializeApp({
     credential: applicationDefault(),
@@ -21,6 +22,7 @@ app.use(morgan('dev'));
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 // API
+app.use('/api/auth', authRouter);
 app.use('/api/demigods', demigodRouter);
 app.use('/api/media', mediaRouter);
 app.get('/api', (_req, res) => {

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { storage } from '../index.js';
+import { requireAuth } from '../middleware/auth.js';
 import { v4 as uuidv4 } from 'uuid';
 import { Datastore } from '@google-cloud/datastore';
 const router = Router();
@@ -9,7 +10,7 @@ const datastore = new Datastore({
         process.env.PROJECT_ID,
 });
 // Upload main picture and optionally link to a demigod by id
-router.post('/main-picture', async (req, res) => {
+router.post('/main-picture', requireAuth, async (req, res) => {
     try {
         const { base64, filename, contentType, demigodId } = req.body;
         if (!base64)

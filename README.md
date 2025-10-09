@@ -50,6 +50,23 @@ Endpoints API:
 - `DELETE /api/demigods/:id` – supprimer un demi-dieu
 - `POST /api/media/main-picture` – téléverser une image base64 `{ base64, filename?, contentType?, demigodId? }`
 
+### Authentification Admin
+
+- Identifiants par défaut: `guest` / `guest`
+- Endpoint de connexion: `POST /api/auth/login` avec `{ "username": "guest", "password": "guest" }`
+- La réponse contient `{ token }`. Le frontend le stocke dans localStorage et l’envoie dans l’en-tête `Authorization: Bearer <token>` pour les routes protégées.
+- Routes protégées:
+  - `POST /api/demigods`
+  - `PUT /api/demigods/:id`
+  - `DELETE /api/demigods/:id`
+  - `POST /api/media/main-picture`
+
+Variables d’environnement optionnelles:
+
+- `ADMIN_USERNAME` (défaut: `guest`)
+- `ADMIN_PASSWORD` (défaut: `guest`)
+- `TOKEN_SECRET` (défaut: `dev-secret-change-me`)
+
 ## Déploiement
 
 Déployer sur Google App Engine :

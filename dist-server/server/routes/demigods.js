@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { requireAuth } from '../middleware/auth.js';
 import { Datastore } from '@google-cloud/datastore';
 const datastore = new Datastore({
     projectId: process.env.GOOGLE_CLOUD_PROJECT ||
@@ -32,7 +33,7 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ error: 'Failed to get demigod' });
     }
 });
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
     const { name, title, description, mainImageUrl } = req.body;
     if (!name)
         return res.status(400).json({ error: 'name is required' });
@@ -55,7 +56,7 @@ router.post('/', async (req, res) => {
         res.status(500).json({ error: 'Failed to create demigod' });
     }
 });
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
     const { name, title, description, mainImageUrl } = req.body;
     try {
         const key = datastore.key([kind, Number(req.params.id)]);
@@ -79,7 +80,7 @@ router.put('/:id', async (req, res) => {
         res.status(500).json({ error: 'Failed to update demigod' });
     }
 });
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
     try {
         const key = datastore.key([kind, Number(req.params.id)]);
         await datastore.delete(key);

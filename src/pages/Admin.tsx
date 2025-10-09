@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAuth, getStoredToken } from "@/hooks/use-auth";
 
 type Demigod = {
   id?: string;
@@ -27,6 +28,7 @@ async function fetchDemigods(): Promise<Demigod[]> {
 
 export default function Admin() {
   const qc = useQueryClient();
+  const { token, login, logout, loading, isAuthed } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["demigods"], queryFn: fetchDemigods });
 
   const [newName, setNewName] = useState("");
@@ -37,7 +39,7 @@ export default function Admin() {
     mutationFn: async (payload: Partial<Demigod>) => {
       const res = await fetch(`${apiBase}/api/demigods`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Create failed");
@@ -57,7 +59,7 @@ export default function Admin() {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Demigod> }) => {
       const res = await fetch(`${apiBase}/api/demigods/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(updates),
       });
       if (!res.ok) throw new Error("Update failed");
@@ -72,7 +74,7 @@ export default function Admin() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${apiBase}/api/demigods/${id}`, { method: "DELETE" });
+      const res = await fetch(`${apiBase}/api/demigods/${id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined });
       if (!res.ok) throw new Error("Delete failed");
     },
     onSuccess: () => {
@@ -87,7 +89,7 @@ export default function Admin() {
     for (const d of data) {
       if (!d.id) continue;
       try {
-        await fetch(`${apiBase}/api/demigods/${d.id}`, { method: "DELETE" });
+        await fetch(`${apiBase}/api/demigods/${d.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined });
       } catch {}
     }
     toast.success("All deleted");
@@ -99,6 +101,22 @@ export default function Admin() {
     createMutation.mutate({ name: newName.trim(), title: newTitle || undefined, description: newDescription || undefined });
   };
 
+  if (!isAuthed) {
+    return (
+      <div className="container mx-auto max-w-md p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Admin Login</CardTitle>
+            <CardDescription>Use credentials guest / guest</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <LoginForm onLogin={login} loading={loading} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-8">
       <Card>
@@ -107,6 +125,9 @@ export default function Admin() {
           <CardDescription>Manage demigods and main pictures</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex justify-end">
+            <Button variant="secondary" onClick={logout}>Logout</Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
               <Label htmlFor="name">Name</Label>
@@ -166,9 +187,10 @@ function Row({ d, onSave, onDelete }: { d: Demigod; onSave: (updates: Partial<De
     setUploading(true);
     try {
       const base64 = await toBase64(file);
+      const token = getStoredToken();
       const res = await fetch(`/api/media/main-picture`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ base64, filename: file.name, contentType: file.type || "image/jpeg", demigodId: d.id }),
       });
       if (!res.ok) throw new Error("Upload failed");
@@ -215,6 +237,32 @@ function toBase64(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+function LoginForm({ onLogin, loading }: { onLogin: (u: string, p: string) => Promise<boolean>; loading: boolean }) {
+  const [u, setU] = useState("");
+  const [p, setP] = useState("");
+  const submit = async () => {
+    try {
+      const ok = await onLogin(u, p);
+      if (!ok) return toast.error("Invalid credentials");
+    } catch {
+      toast.error("Login failed");
+    }
+  };
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="u">Username</Label>
+        <Input id="u" value={u} onChange={(e) => setU(e.target.value)} placeholder="username" />
+      </div>
+      <div>
+        <Label htmlFor="p">Password</Label>
+        <Input id="p" type="password" value={p} onChange={(e) => setP(e.target.value)} placeholder="password" />
+      </div>
+      <Button onClick={submit} disabled={loading}>Login</Button>
+    </div>
+  );
 }
 
 
