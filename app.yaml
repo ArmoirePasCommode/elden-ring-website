@@ -3,7 +3,7 @@ env: standard
 instance_class: F1
 env_variables:
   NODE_ENV: production
-  GCS_BUCKET: elden-ring-media-eng-blade-474413-p1
+  GCS_BUCKET: elden-ring-media-eng-blade-474413-p1 # legacy (no longer used for pictures)
 
 handlers:
   # Root-level JS with correct MIME (safeguard if assets not matched)

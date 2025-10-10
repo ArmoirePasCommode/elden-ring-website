@@ -68,6 +68,7 @@ export default function Admin() {
     onSuccess: () => {
       toast.success("Updated");
       qc.invalidateQueries({ queryKey: ["demigods"] });
+      qc.invalidateQueries({ queryKey: ["demigods-public"] });
     },
     onError: () => toast.error("Update failed"),
   });
@@ -160,7 +161,13 @@ export default function Admin() {
               </TableHeader>
               <TableBody>
                 {(data || []).map((d) => (
-                  <Row key={d.id || Math.random()} d={d} onSave={(updates) => d.id && updateMutation.mutate({ id: d.id, updates })} onDelete={() => d.id && deleteMutation.mutate(d.id)} />
+                  <Row
+                    key={d.id || Math.random()}
+                    d={d}
+                    authToken={token}
+                    onSave={(updates) => d.id && updateMutation.mutate({ id: d.id, updates })}
+                    onDelete={() => d.id && deleteMutation.mutate(d.id)}
+                  />
                 ))}
               </TableBody>
             </Table>
@@ -171,11 +178,12 @@ export default function Admin() {
   );
 }
 
-function Row({ d, onSave, onDelete }: { d: Demigod; onSave: (updates: Partial<Demigod>) => void; onDelete: () => void }) {
+function Row({ d, onSave, onDelete, authToken }: { d: Demigod; onSave: (updates: Partial<Demigod>) => void; onDelete: () => void; authToken?: string | null }) {
   const [name, setName] = useState(d.name || "");
   const [title, setTitle] = useState(d.title || "");
   const [description, setDescription] = useState(d.description || "");
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const save = () => onSave({ name, title, description });
@@ -186,8 +194,12 @@ function Row({ d, onSave, onDelete }: { d: Demigod; onSave: (updates: Partial<De
     if (!file || !d.id) return;
     setUploading(true);
     try {
+      // Show instant local preview
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
       const base64 = await toBase64(file);
-      const token = getStoredToken();
+      const token = authToken || getStoredToken();
+      if (!token) throw new Error("Not authenticated");
       const res = await fetch(`/api/media/main-picture`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -201,6 +213,9 @@ function Row({ d, onSave, onDelete }: { d: Demigod; onSave: (updates: Partial<De
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+      // Revoke any previously created object URLs to avoid leaks
+      // Note: keep the latest previewUrl for immediate UI feedback; it will
+      // be replaced by server URL after data refresh
     }
   };
 
@@ -211,8 +226,8 @@ function Row({ d, onSave, onDelete }: { d: Demigod; onSave: (updates: Partial<De
       <TableCell className="min-w-[240px]"><Input value={description || ""} onChange={(e) => setDescription(e.target.value)} /></TableCell>
       <TableCell className="min-w-[200px]">
         <div className="flex items-center gap-2">
-          {d.mainImageUrl ? (
-            <img src={d.mainImageUrl} alt={d.name} className="h-10 w-10 object-cover rounded" />
+          {previewUrl || d.mainImageUrl ? (
+            <img src={previewUrl || d.mainImageUrl || undefined} alt={d.name} className="h-10 w-10 object-cover rounded" />
           ) : (
             <div className="h-10 w-10 bg-muted rounded" />
           )}

@@ -8,11 +8,29 @@ const datastore = new Datastore({
 });
 const router = Router();
 const kind = 'Demigod';
+function toProxyUrl(url) {
+    if (!url)
+        return url;
+    try {
+        const parsed = new URL(url);
+        const key = parsed.pathname.startsWith('/') ? parsed.pathname.slice(1) : parsed.pathname;
+        if (!key)
+            return url;
+        return `/api/media/public/${key}`;
+    }
+    catch {
+        return url;
+    }
+}
 router.get('/', async (_req, res) => {
     try {
         const query = datastore.createQuery(kind).order('name');
         const [entities] = await datastore.runQuery(query);
-        const items = entities.map((e) => ({ id: e[datastore.KEY].id, ...e }));
+        const items = entities.map((e) => ({
+            id: e[datastore.KEY].id,
+            ...e,
+            mainImageUrl: toProxyUrl(e.mainImageUrl),
+        }));
         res.json(items);
     }
     catch (err) {
@@ -26,7 +44,8 @@ router.get('/:id', async (req, res) => {
         const [entity] = await datastore.get(key);
         if (!entity)
             return res.status(404).json({ error: 'Not found' });
-        res.json({ id: key.id, ...entity });
+        const mainImageUrl = toProxyUrl(entity.mainImageUrl);
+        res.json({ id: key.id, ...entity, mainImageUrl });
     }
     catch (err) {
         console.error('Get demigod error:', err);

@@ -25,7 +25,7 @@ Ce projet est un site web dédié à l'univers d'Elden Ring, développé avec Re
 
 ## Backend API (Express + Firestore + Cloud Storage)
 
-- Démarrer le serveur localement (nécessite des identifiants Google ADC):
+- Démarrer le serveur localement (nécessite des identifiants Google ADC) :
 
 ```bash
 npm run dev:server
@@ -66,6 +66,17 @@ Variables d’environnement optionnelles:
 - `ADMIN_USERNAME` (défaut: `guest`)
 - `ADMIN_PASSWORD` (défaut: `guest`)
 - `TOKEN_SECRET` (défaut: `dev-secret-change-me`)
+
+### Téléversement d’images via AWS S3
+
+Les images sont désormais envoyées vers AWS S3 (seulement pour les images). Configurez les variables suivantes :
+
+- `S3_BUCKET`: Nom du bucket S3
+- `S3_REGION`: Région du bucket (ex: `eu-west-3`)
+- `AWS_ACCESS_KEY_ID`: Clé d’accès IAM avec permissions `s3:PutObject` et `s3:PutObjectAcl`
+- `AWS_SECRET_ACCESS_KEY`: Secret associé
+
+Le routeur `POST /api/media/main-picture` charge l’image dans `s3://${S3_BUCKET}/main/<fichier>` avec ACL `public-read` et renvoie une URL publique de type `https://<bucket>.s3.<region>.amazonaws.com/main/<fichier>` (ou `s3.amazonaws.com` pour `us-east-1`). Si `demigodId` est fourni, la propriété `mainImageUrl` de l’élément est mise à jour.
 
 ## Déploiement
 
