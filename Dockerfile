@@ -20,3 +20,5 @@ USER node
 EXPOSE 3000
 # lance le script start si présent, sinon sert le dossier build via npx serve
 CMD ["sh", "-c", "npm run start --if-present || npx serve -s build -l 3000"]
+
+# CI note: owner lowercasing is handled in the workflow tags

@@ -69,9 +69,10 @@ jobs:
         with:
           context: .
           push: true
+          # IMPORTANT: forcer owner en minuscules pour GHCR (évite erreur "repository name must be lowercase")
           tags: |
-            ghcr.io/${{ github.repository_owner }}/elden-ring-website:latest
-            ghcr.io/${{ github.repository_owner }}/elden-ring-website:${{ github.sha }}
+            ghcr.io/${{ toLower(github.repository_owner) }}/elden-ring-website:latest
+            ghcr.io/${{ toLower(github.repository_owner) }}/elden-ring-website:${{ github.sha }}
           file: ./Dockerfile
           build-args: |
             NODE_ENV=production

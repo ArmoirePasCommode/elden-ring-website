@@ -1,4 +1,4 @@
-# (modifié : commentaire CI ajouté)
+# CI note: workflow tags lowercased to avoid ghcr tag error
 node_modules
 npm-debug.log
 Dockerfile
