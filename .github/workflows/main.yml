@@ -5,7 +5,6 @@ on:
     branches: [ aws_cicd, main, master ]
   pull_request:
     branches: [ aws_cicd, main, master ]
-  # permet de déclencher manuellement le workflow depuis l'interface Actions
   workflow_dispatch:
 
 permissions:
