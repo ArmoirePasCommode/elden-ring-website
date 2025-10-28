@@ -100,7 +100,6 @@ jobs:
           node-version: '18'
 
       - name: Check required secrets (do not fail CI, set SKIP_DEPLOY)
-        # Cette étape n'échoue pas la job : elle définit SKIP_DEPLOY=true si un secret manque.
         run: |
           skip=false
           missing=""
