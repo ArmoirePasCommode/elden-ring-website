@@ -83,22 +83,56 @@ jobs:
             NODE_ENV=production
 
   deploy:
-    name: Deploy to GitHub Pages
+    name: Deploy to Google App Engine
     needs: test
     runs-on: ubuntu-latest
-    # déploiement Pages uniquement depuis main ou master
+    # déploiement App Engine uniquement depuis main ou master
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install and Build
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Check required secrets
+        # échoue si DOTENV, GCP_SA_KEY ou GCP_PROJECT sont manquants
+        run: |
+          if [ -z "${{ secrets.DOTENV }}" ]; then
+            echo "ERROR: secret DOTENV is not set" >&2
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "ERROR: secret GCP_SA_KEY is not set" >&2
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_PROJECT }}" ]; then
+            echo "ERROR: secret GCP_PROJECT is not set" >&2
+            exit 1
+          fi
+          echo "All required secrets are present."
+
+      - name: Create .env from secret
+        # Assurez-vous d'ajouter le secret DOTENV dans les Settings > Secrets
+        run: |
+          printf '%s' "${{ secrets.DOTENV }}" > .env
+          echo ".env created with secrets.DOTENV (masked)."
+
+      - name: Install dependencies and build frontend+server
         run: |
           npm ci
-          npm run build --if-present
+          npm run build
+          npm run build:server
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Set up gcloud (authenticate)
+        uses: google-github-actions/setup-gcloud@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          # secrets.GCP_SA_KEY doit contenir la clé JSON du service account
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      - name: Deploy to App Engine
+        run: |
+          gcloud app deploy --quiet
