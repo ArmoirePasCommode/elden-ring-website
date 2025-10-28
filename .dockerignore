@@ -1,3 +1,4 @@
+# (modifié : commentaire CI ajouté)
 node_modules
 npm-debug.log
 Dockerfile

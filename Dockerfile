@@ -1,3 +1,4 @@
+# (modifié : commentaire CI ajouté)
 # Stage de build
 FROM node:18 AS build
 WORKDIR /app
