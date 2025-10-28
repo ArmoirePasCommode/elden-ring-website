@@ -136,10 +136,18 @@ jobs:
       - name: Write GCP service account key to file
         if: ${{ env.SKIP_DEPLOY != 'true' }}
         run: |
-          # écrire la clé JSON dans un fichier sécurisé
-          echo "${{ secrets.GCP_SA_KEY }}" > "$RUNNER_TEMP/gcp-key.json"
+          # écrire la clé JSON dans un fichier sécurisé en préservant les retours à la ligne
+          # et en supprimant les CR éventuels (Windows)
+          printf '%s' "${{ secrets.GCP_SA_KEY }}" | tr -d '\r' > "$RUNNER_TEMP/gcp-key.json"
           chmod 600 "$RUNNER_TEMP/gcp-key.json"
           echo "GCP_KEY_PATH=$RUNNER_TEMP/gcp-key.json" >> $GITHUB_ENV
+
+          # validation basique du JSON pour échouer vite si la clé est mal formée
+          if ! python -c "import sys, json; json.load(open('$RUNNER_TEMP/gcp-key.json'))" >/dev/null 2>&1; then
+            echo "ERROR: GCP_SA_KEY secret does not contain valid JSON" >&2
+            echo "You should verify the secret contents in Settings → Secrets and variables → Actions" >&2
+            exit 1
+          fi
 
       - name: Authenticate to GCP (activate service account) and set project
         if: ${{ env.SKIP_DEPLOY != 'true' }}
