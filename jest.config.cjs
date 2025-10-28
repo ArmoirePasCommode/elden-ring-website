@@ -6,8 +6,10 @@ module.exports = {
 		'^.+\\.(ts|tsx|js|jsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
 	},
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+	// mappe seulement les imports relatifs se terminant par .js vers le même chemin sans extension
+	// évite de remapper des paquets node_modules comme "ipaddr.js"
 	moduleNameMapper: {
-		'^(.+)\\.js$': '$1',
+		'^(\\.{1,2}/.*)\\.js$': '$1',
 	},
 	testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx|js)'],
 	transformIgnorePatterns: ['<rootDir>/node_modules/'],
