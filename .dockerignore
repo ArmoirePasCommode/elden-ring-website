@@ -8,4 +8,5 @@ build
 dist
 .vscode
 .env
-
+.env.local
+coverage

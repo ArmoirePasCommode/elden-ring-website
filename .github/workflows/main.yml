@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [ aws_cicd, master ]
+    branches: [ aws_cicd, main, master ]
   pull_request:
-    branches: [ aws_cicd, master ]
+    branches: [ aws_cicd, main, master ]
 
 permissions:
   contents: read
@@ -48,6 +48,8 @@ jobs:
     name: Build and push Docker image
     needs: test
     runs-on: ubuntu-latest
+    # ne pousse l'image que sur branches de déploiement (aws_cicd, main, master)
+    if: github.ref == 'refs/heads/aws_cicd' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -81,7 +83,8 @@ jobs:
     name: Deploy to GitHub Pages
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    # déploiement Pages uniquement depuis main ou master
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
