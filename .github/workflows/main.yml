@@ -100,12 +100,18 @@ jobs:
           node-version: '18'
 
       - name: Check required secrets (do not fail CI, set SKIP_DEPLOY)
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
         run: |
           skip=false
           missing=""
-          if [ -z "${{ secrets.DOTENV }}" ]; then missing="${missing} DOTENV"; skip=true; fi
-          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then missing="${missing} GCP_SA_KEY"; skip=true; fi
-          if [ -z "${{ secrets.GCP_PROJECT }}" ]; then missing="${missing} GCP_PROJECT"; skip=true; fi
+          # utiliser expansions sûres pour éviter "too many arguments" si le secret contient des retours à la ligne
+          if [ -z "${DOTENV:-}" ]; then missing="${missing} DOTENV"; skip=true; fi
+          # n'accepte que la clé JSON brute
+          if [ -z "${GCP_SA_KEY:-}" ]; then missing="${missing} GCP_SA_KEY"; skip=true; fi
+          if [ -z "${GCP_PROJECT:-}" ]; then missing="${missing} GCP_PROJECT"; skip=true; fi
           if [ "$skip" = true ]; then
             echo "Missing required secrets:${missing}" >&2
             echo "SKIP_DEPLOY=true" >> $GITHUB_ENV
@@ -115,9 +121,12 @@ jobs:
 
       - name: Create .env from secret
         if: ${{ env.SKIP_DEPLOY != 'true' }}
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
         run: |
-          printf '%s' "${{ secrets.DOTENV }}" > .env
-          echo ".env created with secrets.DOTENV (masked)."
+          # écrire le contenu de DOTENV (protection des newlines)
+          printf '%s' "$DOTENV" > .env
+          echo ".env created with DOTENV (masked)."
 
       - name: Install dependencies and build frontend+server
         if: ${{ env.SKIP_DEPLOY != 'true' }}
@@ -135,37 +144,31 @@ jobs:
 
       - name: Write GCP service account key to file
         if: ${{ env.SKIP_DEPLOY != 'true' }}
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           set -euo pipefail
 
           KEY_PATH="$RUNNER_TEMP/gcp-key.json"
           echo "Attempting to write GCP service account key to $KEY_PATH (contents are not printed)."
 
-          # Prefer base64 secret if fourni (évite problèmes de newline/escaping)
-          if [ -n "${{ secrets.GCP_SA_KEY_BASE64 }}" ]; then
-            echo "Using GCP_SA_KEY_BASE64 (base64) secret."
-            printf '%s' "${{ secrets.GCP_SA_KEY_BASE64 }}" | tr -d '\r' | base64 --decode > "$KEY_PATH" || {
-              echo "ERROR: failed to decode GCP_SA_KEY_BASE64; ensure it is valid base64." >&2
-              exit 1
-            }
-          elif [ -n "${{ secrets.GCP_SA_KEY }}" ]; then
+          if [ -n "${GCP_SA_KEY:-}" ]; then
             echo "Using GCP_SA_KEY secret (raw JSON). Writing safely and attempting validation."
-            # write raw, removing CR
-            printf '%s' "${{ secrets.GCP_SA_KEY }}" | tr -d '\r' > "$KEY_PATH" || {
+            printf '%s' "$GCP_SA_KEY" | tr -d '\r' > "$KEY_PATH" || {
               echo "ERROR: failed to write GCP_SA_KEY to file." >&2
               exit 1
             }
 
-            # if JSON invalid, try interpreting escaped \n sequences into real newlines
+            # si JSON invalide, tenter d'interpréter les séquences backslash-n
             if ! python -c "import json,sys; json.load(open('$KEY_PATH'))" >/dev/null 2>&1; then
               echo "Raw JSON invalid. Attempting to unescape backslash-n sequences and retry."
-              printf '%b' "${{ secrets.GCP_SA_KEY }}" | tr -d '\r' > "$KEY_PATH" || {
+              printf '%b' "$GCP_SA_KEY" | tr -d '\r' > "$KEY_PATH" || {
                 echo "ERROR: failed to write unescaped GCP_SA_KEY to file." >&2
                 exit 1
               }
             fi
           else
-            echo "ERROR: No GCP service account secret found (neither GCP_SA_KEY nor GCP_SA_KEY_BASE64)." >&2
+            echo "ERROR: No GCP service account secret found (GCP_SA_KEY)." >&2
             echo "Please add the secret in Settings → Secrets and variables → Actions and re-run the workflow." >&2
             exit 1
           fi
@@ -175,19 +178,24 @@ jobs:
 
           # validation finale du JSON
           if ! python -c "import json,sys; json.load(open('$KEY_PATH'))" >/dev/null 2>&1; then
-            echo "ERROR: GCP service account key file was written but is not valid JSON." >&2
-            echo "Consider creating a base64-encoded secret (base64 -w0 key.json) and set it to GCP_SA_KEY_BASE64." >&2
+            echo "ERROR: GCP_SA_KEY is not valid JSON after attempts." >&2
             exit 1
           fi
 
       - name: Authenticate to GCP (activate service account) and set project
         if: ${{ env.SKIP_DEPLOY != 'true' }}
         env:
-          GCP_KEY_PATH: ${{ env.GCP_KEY_PATH }}
+          # GCP_KEY_PATH est défini dynamiquement dans une étape précédente via GITHUB_ENV
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
         run: |
-          # active le compte de service explicitement et définit le projet
+          # utilise la variable d'environnement GCP_KEY_PATH telle que fournie par GITHUB_ENV
+          if [ -z "${GCP_KEY_PATH:-}" ]; then
+            echo "ERROR: GCP_KEY_PATH is not set; previous step must have failed." >&2
+            exit 1
+          fi
+          # active le compte de service et définit le projet
           gcloud auth activate-service-account --key-file="$GCP_KEY_PATH"
-          gcloud config set project "${{ secrets.GCP_PROJECT }}"
+          gcloud config set project "$GCP_PROJECT"
 
       - name: Deploy to App Engine
         if: ${{ env.SKIP_DEPLOY != 'true' }}
