@@ -3,7 +3,8 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "module": "commonjs"
+    "module": "commonjs",
+    "allowJs": true,
+    "moduleResolution": "node"
   }
 }
-
