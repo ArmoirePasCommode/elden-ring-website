@@ -126,12 +126,29 @@ jobs:
           npm run build
           npm run build:server
 
-      - name: Set up gcloud (authenticate)
+      - name: Install gcloud SDK
         if: ${{ env.SKIP_DEPLOY != 'true' }}
         uses: google-github-actions/setup-gcloud@v1
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT }}
+          # installe la dernière version du SDK
+          version: 'latest'
+
+      - name: Write GCP service account key to file
+        if: ${{ env.SKIP_DEPLOY != 'true' }}
+        run: |
+          # écrire la clé JSON dans un fichier sécurisé
+          echo "${{ secrets.GCP_SA_KEY }}" > "$RUNNER_TEMP/gcp-key.json"
+          chmod 600 "$RUNNER_TEMP/gcp-key.json"
+          echo "GCP_KEY_PATH=$RUNNER_TEMP/gcp-key.json" >> $GITHUB_ENV
+
+      - name: Authenticate to GCP (activate service account) and set project
+        if: ${{ env.SKIP_DEPLOY != 'true' }}
+        env:
+          GCP_KEY_PATH: ${{ env.GCP_KEY_PATH }}
+        run: |
+          # active le compte de service explicitement et définit le projet
+          gcloud auth activate-service-account --key-file="$GCP_KEY_PATH"
+          gcloud config set project "${{ secrets.GCP_PROJECT }}"
 
       - name: Deploy to App Engine
         if: ${{ env.SKIP_DEPLOY != 'true' }}
