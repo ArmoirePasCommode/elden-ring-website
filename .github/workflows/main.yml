@@ -5,6 +5,8 @@ on:
     branches: [ aws_cicd, main, master ]
   pull_request:
     branches: [ aws_cicd, main, master ]
+  # permet de déclencher manuellement le workflow depuis l'interface Actions
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -86,8 +88,8 @@ jobs:
     name: Deploy to Google App Engine
     needs: test
     runs-on: ubuntu-latest
-    # déploiement App Engine uniquement depuis main ou master
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    # déploiement App Engine depuis main, master, aws_cicd ou via exécution manuelle
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/aws_cicd'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
