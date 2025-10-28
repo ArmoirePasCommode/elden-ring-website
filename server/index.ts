@@ -11,7 +11,6 @@ import demigodRouter from './routes/demigods.js';
 import mediaRouter from './routes/media.js';
 import authRouter from './routes/auth.js';
 
-
 // Initialize Firebase Admin (App Engine default service account or env var JSON)
 initializeApp({
   credential: applicationDefault(),
