@@ -51,6 +51,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set lowercase owner
+        # convertit github.repository_owner en minuscules (compatible avec GHCR)
+        run: |
+          echo "OWNER_LOWER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -69,10 +74,10 @@ jobs:
         with:
           context: .
           push: true
-          # IMPORTANT: forcer owner en minuscules pour GHCR (évite erreur "repository name must be lowercase")
+          # IMPORTANT: utiliser la variable env OWNER_LOWER (définie ci-dessus) pour éviter l'erreur de casse
           tags: |
-            ghcr.io/${{ toLower(github.repository_owner) }}/elden-ring-website:latest
-            ghcr.io/${{ toLower(github.repository_owner) }}/elden-ring-website:${{ github.sha }}
+            ghcr.io/${{ env.OWNER_LOWER }}/elden-ring-website:latest
+            ghcr.io/${{ env.OWNER_LOWER }}/elden-ring-website:${{ github.sha }}
           file: ./Dockerfile
           build-args: |
             NODE_ENV=production

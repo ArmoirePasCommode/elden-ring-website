@@ -1,4 +1,5 @@
 # CI note: workflow tags lowercased to avoid ghcr tag error
+# (annotation CI) workflow now lowercases owner via GITHUB_ENV step
 node_modules
 npm-debug.log
 Dockerfile

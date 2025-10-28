@@ -14,4 +14,4 @@ module.exports = {
 	testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx|js)'],
 	transformIgnorePatterns: ['<rootDir>/node_modules/'],
 	// CI note: moduleNameMapper ajusté pour tests locaux; no change required for Docker tag issue
-};
+}; // (annotation CI) main.yml adjusted to set OWNER_LOWER via $GITHUB_ENV

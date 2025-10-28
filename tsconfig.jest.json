@@ -7,5 +7,5 @@
     "allowJs": true,
     "moduleResolution": "node"
   },
-  "ciNote": "No-op field added to record workflow tag fix"
+  "ciNote": "Workflow now sets OWNER_LOWER via GITHUB_ENV; no tsconfig change required"
 }
