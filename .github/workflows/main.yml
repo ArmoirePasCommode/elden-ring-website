@@ -136,16 +136,47 @@ jobs:
       - name: Write GCP service account key to file
         if: ${{ env.SKIP_DEPLOY != 'true' }}
         run: |
-          # écrire la clé JSON dans un fichier sécurisé en préservant les retours à la ligne
-          # et en supprimant les CR éventuels (Windows)
-          printf '%s' "${{ secrets.GCP_SA_KEY }}" | tr -d '\r' > "$RUNNER_TEMP/gcp-key.json"
-          chmod 600 "$RUNNER_TEMP/gcp-key.json"
-          echo "GCP_KEY_PATH=$RUNNER_TEMP/gcp-key.json" >> $GITHUB_ENV
+          set -euo pipefail
 
-          # validation basique du JSON pour échouer vite si la clé est mal formée
-          if ! python -c "import sys, json; json.load(open('$RUNNER_TEMP/gcp-key.json'))" >/dev/null 2>&1; then
-            echo "ERROR: GCP_SA_KEY secret does not contain valid JSON" >&2
-            echo "You should verify the secret contents in Settings → Secrets and variables → Actions" >&2
+          KEY_PATH="$RUNNER_TEMP/gcp-key.json"
+          echo "Attempting to write GCP service account key to $KEY_PATH (contents are not printed)."
+
+          # Prefer base64 secret if fourni (évite problèmes de newline/escaping)
+          if [ -n "${{ secrets.GCP_SA_KEY_BASE64 }}" ]; then
+            echo "Using GCP_SA_KEY_BASE64 (base64) secret."
+            printf '%s' "${{ secrets.GCP_SA_KEY_BASE64 }}" | tr -d '\r' | base64 --decode > "$KEY_PATH" || {
+              echo "ERROR: failed to decode GCP_SA_KEY_BASE64; ensure it is valid base64." >&2
+              exit 1
+            }
+          elif [ -n "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "Using GCP_SA_KEY secret (raw JSON). Writing safely and attempting validation."
+            # write raw, removing CR
+            printf '%s' "${{ secrets.GCP_SA_KEY }}" | tr -d '\r' > "$KEY_PATH" || {
+              echo "ERROR: failed to write GCP_SA_KEY to file." >&2
+              exit 1
+            }
+
+            # if JSON invalid, try interpreting escaped \n sequences into real newlines
+            if ! python -c "import json,sys; json.load(open('$KEY_PATH'))" >/dev/null 2>&1; then
+              echo "Raw JSON invalid. Attempting to unescape backslash-n sequences and retry."
+              printf '%b' "${{ secrets.GCP_SA_KEY }}" | tr -d '\r' > "$KEY_PATH" || {
+                echo "ERROR: failed to write unescaped GCP_SA_KEY to file." >&2
+                exit 1
+              }
+            fi
+          else
+            echo "ERROR: No GCP service account secret found (neither GCP_SA_KEY nor GCP_SA_KEY_BASE64)." >&2
+            echo "Please add the secret in Settings → Secrets and variables → Actions and re-run the workflow." >&2
+            exit 1
+          fi
+
+          chmod 600 "$KEY_PATH"
+          echo "GCP_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
+
+          # validation finale du JSON
+          if ! python -c "import json,sys; json.load(open('$KEY_PATH'))" >/dev/null 2>&1; then
+            echo "ERROR: GCP service account key file was written but is not valid JSON." >&2
+            echo "Consider creating a base64-encoded secret (base64 -w0 key.json) and set it to GCP_SA_KEY_BASE64." >&2
             exit 1
           fi
 
