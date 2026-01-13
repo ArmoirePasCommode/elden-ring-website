@@ -27,19 +27,19 @@ sudo usermod -a -G docker ec2-user
 ### 3. Login to ECR
 Run this command to authenticate Docker with your ECR registry:
 ```bash
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 156433664583.dkr.ecr.us-east-1.amazonaws.com
+aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin 156433664583.dkr.ecr.us-east-1.amazonaws.com
 ```
 
 ### 4. Pull your Image
 Download the latest version of your backend:
 ```bash
-docker pull 156433664583.dkr.ecr.us-east-1.amazonaws.com/elden-ring-wesite:latest
+sudo docker pull 156433664583.dkr.ecr.us-east-1.amazonaws.com/elden-ring-wesite:latest
 ```
 
 ### 5. Run the Container
 Start the server in the background, mapping port 80 (web) to 8080 (container):
 ```bash
-docker run -d -p 80:8080 \
+sudo docker run -d -p 80:8080 \
   --name elden-ring-backend \
   --restart always \
   -e NODE_ENV=production \
