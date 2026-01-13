@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { API_BASE_URL } from "@/lib/api-config";
 
 const STORAGE_KEY = "auth.token";
 
@@ -13,13 +14,13 @@ export function getStoredToken(): string | null {
 export function setStoredToken(token: string) {
   try {
     localStorage.setItem(STORAGE_KEY, token);
-  } catch {}
+  } catch { }
 }
 
 export function clearStoredToken() {
   try {
     localStorage.removeItem(STORAGE_KEY);
-  } catch {}
+  } catch { }
 }
 
 export function useAuth() {
@@ -33,7 +34,7 @@ export function useAuth() {
   const login = useCallback(async (username: string, password: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/auth/login`, {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

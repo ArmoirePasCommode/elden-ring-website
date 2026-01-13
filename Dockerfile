@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build --if-present
+RUN npm run build:server
 
 # Stage de production
 FROM node:18-alpine AS production
@@ -17,8 +18,8 @@ COPY --from=build /app .
 RUN chown -R node:node /app
 USER node
 
-EXPOSE 3000
-# lance le script start si présent, sinon sert le dossier build via npx serve
-CMD ["sh", "-c", "npm run start --if-present || npx serve -s build -l 3000"]
+EXPOSE 8080
+# start the server
+CMD ["node", "dist-server/server/index.js"]
 
 # CI note: owner lowercasing is handled in the workflow tags

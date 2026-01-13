@@ -35,11 +35,11 @@ handlers:
     static_files: dist/assets/\1
     upload: dist/assets/.*
 
-  # API handled by Express
-  - url: /api
-    script: auto
-  - url: /api/.*
-    script: auto
+  # API handled by external backend (AWS) - removed local handlers
+  # - url: /api
+  #   script: auto
+  # - url: /api/.*
+  #   script: auto
 
   # SPA Fallback: redirect all non-static URLs to index.html
   - url: /.*

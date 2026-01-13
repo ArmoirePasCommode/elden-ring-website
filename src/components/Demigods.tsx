@@ -8,10 +8,12 @@ type Demigod = {
   mainImageUrl?: string | null;
 };
 
-const apiBase = ""; // same origin
+import { API_BASE_URL } from "@/lib/api-config";
+
+// removed local apiBase
 
 async function fetchDemigods(): Promise<Demigod[]> {
-  const res = await fetch(`${apiBase}/api/demigods`);
+  const res = await fetch(`${API_BASE_URL}/api/demigods`);
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
 }

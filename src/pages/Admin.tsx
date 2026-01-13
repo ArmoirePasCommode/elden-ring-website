@@ -18,10 +18,13 @@ type Demigod = {
   updatedAt?: string;
 };
 
-const apiBase = ""; // same origin
+import { API_BASE_URL } from "@/lib/api-config";
+
+// removed local apiBase
+
 
 async function fetchDemigods(): Promise<Demigod[]> {
-  const res = await fetch(`${apiBase}/api/demigods`);
+  const res = await fetch(`${API_BASE_URL}/api/demigods`);
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
 }
@@ -37,7 +40,7 @@ export default function Admin() {
 
   const createMutation = useMutation({
     mutationFn: async (payload: Partial<Demigod>) => {
-      const res = await fetch(`${apiBase}/api/demigods`, {
+      const res = await fetch(`${API_BASE_URL}/api/demigods`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(payload),
@@ -57,7 +60,7 @@ export default function Admin() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Demigod> }) => {
-      const res = await fetch(`${apiBase}/api/demigods/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/demigods/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(updates),
@@ -75,7 +78,7 @@ export default function Admin() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${apiBase}/api/demigods/${id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+      const res = await fetch(`${API_BASE_URL}/api/demigods/${id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined });
       if (!res.ok) throw new Error("Delete failed");
     },
     onSuccess: () => {
@@ -90,8 +93,8 @@ export default function Admin() {
     for (const d of data) {
       if (!d.id) continue;
       try {
-        await fetch(`${apiBase}/api/demigods/${d.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined });
-      } catch {}
+        await fetch(`${API_BASE_URL}/api/demigods/${d.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+      } catch { }
     }
     toast.success("All deleted");
     qc.invalidateQueries({ queryKey: ["demigods"] });
@@ -200,7 +203,7 @@ function Row({ d, onSave, onDelete, authToken }: { d: Demigod; onSave: (updates:
       const base64 = await toBase64(file);
       const token = authToken || getStoredToken();
       if (!token) throw new Error("Not authenticated");
-      const res = await fetch(`/api/media/main-picture`, {
+      const res = await fetch(`${API_BASE_URL}/api/media/main-picture`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ base64, filename: file.name, contentType: file.type || "image/jpeg", demigodId: d.id }),
