@@ -1,7 +1,7 @@
 name: CI/CD
 
 
-on:
+"on":
   push:
     branches: [ aws_cicd, main, master ]
   pull_request:
