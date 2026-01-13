@@ -14,7 +14,6 @@ SSH into your instance:
 ```bash
 ssh -i "your-key.pem" ec2-user@your-public-ip
 ```
-
 ### 2. Install Docker
 Run these commands to install and start Docker (works on Amazon Linux 2023):
 ```bash
