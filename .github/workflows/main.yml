@@ -117,7 +117,6 @@ jobs:
     name: Deploy to Google App Engine
     needs: test
     runs-on: ubuntu-latest
-    # déploiement App Engine depuis main, master, aws_cicd ou via exécution manuelle
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/aws_cicd'
     steps:
       - name: Checkout repository
