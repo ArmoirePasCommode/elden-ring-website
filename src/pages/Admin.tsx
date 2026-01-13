@@ -129,7 +129,8 @@ export default function Admin() {
           <CardDescription>Manage demigods and main pictures</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => window.location.href = '/'}>Home</Button>
             <Button variant="secondary" onClick={logout}>Logout</Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
