@@ -50,12 +50,16 @@ export function verifyToken(token) {
 }
 export function requireAuth(req, res, next) {
     const auth = req.headers['authorization'];
-    if (!auth || !auth.startsWith('Bearer '))
+    if (!auth || !auth.startsWith('Bearer ')) {
+        console.warn(`[Auth] 401: Missing or invalid Authorization header: ${auth}`);
         return res.status(401).json({ error: 'Unauthorized' });
+    }
     const token = auth.slice('Bearer '.length);
     const payload = verifyToken(token);
-    if (!payload)
+    if (!payload) {
+        console.warn(`[Auth] 401: Token verification failed for token: ${token.substring(0, 10)}...`);
         return res.status(401).json({ error: 'Unauthorized' });
+    }
     req.user = payload.sub;
     next();
 }

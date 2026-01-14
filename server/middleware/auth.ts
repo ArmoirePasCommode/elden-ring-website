@@ -57,10 +57,16 @@ export function verifyToken(token: string): AuthPayload | null {
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers['authorization'];
-  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+  if (!auth || !auth.startsWith('Bearer ')) {
+    console.warn(`[Auth] 401: Missing or invalid Authorization header: ${auth}`);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   const token = auth.slice('Bearer '.length);
   const payload = verifyToken(token);
-  if (!payload) return res.status(401).json({ error: 'Unauthorized' });
+  if (!payload) {
+    console.warn(`[Auth] 401: Token verification failed for token: ${token.substring(0, 10)}...`);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   (req as any).user = payload.sub;
   next();
 }

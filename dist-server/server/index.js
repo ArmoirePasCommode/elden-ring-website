@@ -29,6 +29,9 @@ app.use('/api/media', mediaRouter);
 app.get('/api', (_req, res) => {
     res.json({ ok: true, service: 'elden-ring-backend', routes: ['/api/demigods', '/api/media'] });
 });
+// Root handlers for health check
+app.get('/', (_req, res) => res.send('OK'));
+app.post('/', (_req, res) => res.send('OK'));
 // Serve static files from dist (resolve from project root)
 const distDir = path.resolve(process.cwd(), 'dist');
 const staticOptions = {
