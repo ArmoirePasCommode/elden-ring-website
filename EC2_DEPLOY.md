@@ -37,14 +37,25 @@ sudo docker pull 156433664583.dkr.ecr.us-east-1.amazonaws.com/elden-ring-wesite:
 ```
 
 ### 5. Run the Container
-Start the server in the background, mapping port 80 (web) to 8080 (container):
-```bash
-sudo docker run -d -p 80:8080 \
-  --name elden-ring-backend \
-  --restart always \
-  -e NODE_ENV=production \
-  156433664583.dkr.ecr.us-east-1.amazonaws.com/elden-ring-wesite:latest
-```
+You need to provide Google Cloud credentials so the backend can access Datastore.
+
+1.  **Create the key file on EC2**:
+    ```bash
+    nano gcp-key.json
+    # Paste your service account JSON content here, then save (Ctrl+O, Enter, Ctrl+X)
+    ```
+
+2.  **Run the container** with the key mounted:
+    ```bash
+    sudo docker run -d -p 8080:8080 \
+      --name elden-ring-backend \
+      --restart always \
+      -e NODE_ENV=production \
+      -e GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json \
+      -e GCLOUD_PROJECT=mtg-card-scanner-477210 \
+      -v $(pwd)/gcp-key.json:/app/gcp-key.json \
+      156433664583.dkr.ecr.us-east-1.amazonaws.com/elden-ring-wesite:latest
+    ```
 
 ### 6. Get your URL
 Your API URL is now: `http://<your-ec2-public-ip>`
