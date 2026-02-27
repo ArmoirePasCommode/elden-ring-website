@@ -21,13 +21,15 @@ type Demigod = {
 
 const router = Router();
 const kind = 'Demigod';
+const API_URL = process.env.VITE_API_URL || 'https://elden-api.3utilities.com';
+
 function toProxyUrl(url?: string | null): string | null | undefined {
   if (!url) return url;
   try {
     const parsed = new URL(url);
     const key = parsed.pathname.startsWith('/') ? parsed.pathname.slice(1) : parsed.pathname;
     if (!key) return url;
-    return `/api/media/public/${key}`;
+    return `${API_URL}/api/media/public/${key}`;
   } catch {
     return url;
   }
