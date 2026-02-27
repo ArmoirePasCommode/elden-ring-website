@@ -21,7 +21,10 @@ export const db = getFirestore();
 export const storage = getStorage();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'https://eng-blade-474413-p1.ew.r.appspot.com',
+  credentials: true
+}));
 app.use(morgan('dev'));
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
